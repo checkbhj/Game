@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="Jahid Khan">
+    <title>Chess</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            display: grid;
+            place-items: center;
+            overflow-x: hidden;
+        }
+
+        h1, h2 {
+            margin: 10px;
+        }
+
+        #game-options, #game-controls, #info {
+            margin: 10px 0;
+        }
+
+        ul {
+            display: grid;
+            grid-template-columns: 1fr;
+        }
+
+        .divv {
+            display: flex;
+        }
+
+        li {
+            list-style: none;
+            display: grid;
+            place-items: center;
+            font-size: 0px;
+        }
+
+        .box {
+            margin: .5px;
+            width: 75px;
+            height: 75px;
+        }
+
+        .allimg {
+            width: 45px;
+            position: relative;
+            bottom: 5px;
+        }
+
+        .allpawn {
+            transform: scale(.7);
+        }
+
+        #timer, #ideas {
+            margin: 5px;
+        }
+
+        @media (max-width: 650px) {
+            .box {
+                width: 11vw;
+                height: 11vw;
+            }
+
+            .allimg {
+                width: 7vw;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Chess</h1>
+    <h2 id="tog">White's Turn</h2>
+
+    <!-- Game Options -->
+    <div id="game-options">
+        <h3>Choose Game Mode</h3>
+        <label>
+            <input type="radio" name="mode" value="friend" checked> Play with Friend
+        </label>
+        <label>
+            <input type="radio" name="mode" value="computer"> Play with Computer
+        </label>
+        <div id="difficulty" style="display:none;">
+            <label>
+                Difficulty:
+                <select id="difficulty-level">
+                    <option value="easy">Easy</option>
+                    <option value="medium">Medium</option>
+                    <option value="hard">Hard</option>
+                </select>
+            </label>
+        </div>
+        <div id="player-names">
+            <label>Player 1: <input type="text" id="player1" placeholder="Enter name"></label>
+            <label>Player 2: <input type="text" id="player2" placeholder="Enter name"></label>
+        </div>
+    </div>
+
+    <!-- Game Controls -->
+    <div id="game-controls">
+        <button id="start">Start</button>
+        <button id="pause" disabled>Pause</button>
+        <button id="resume" disabled>Resume</button>
+        <button id="restart">Restart</button>
+    </div>
+
+    <!-- Timer and Ideas -->
+    <div id="info">
+        <div id="timer">Time: <span id="time">00:00</span></div>
+        <div id="ideas">Ideas Left: <span id="idea-count">4</span></div>
+    </div>
+
+    <!-- Chess Board -->
+    <ul></ul>
+
+    <script>
+        let timer, timeElapsed = 0, ideasLeft = 4, isPaused = false;
+        let gameMode = 'friend', difficulty = 'easy';
+
+        // Initialize Chess Board
+        function initializeBoard() {
+            const board = document.querySelector('ul');
+            board.innerHTML = ''; // Clear previous board
+
+            const rows = ['8', '7', '6', '5', '4', '3', '2', '1'];
+            const pieces = [
+                ['rook', 'knight', 'bishop', 'queen', 'king', 'bishop', 'knight', 'rook'],
+                ['pawn', 'pawn', 'pawn', 'pawn', 'pawn', 'pawn', 'pawn', 'pawn']
+            ];
+
+            rows.forEach((row, index) => {
+                const div = document.createElement('div');
+                div.className = 'divv';
+                div.id = `row${row}`;
+
+                for (let col = 1; col <= 8; col++) {
+                    const box = document.createElement('li');
+                    box.className = 'box';
+                    box.id = `b${row}${col}`;
+                    if (index === 0 || index === 1) box.innerText = `B${pieces[index][col - 1]}`;
+                    if (index === 6 || index === 7) box.innerText = `W${pieces[7 - index][col - 1]}`;
+                    div.appendChild(box);
+                }
+                board.appendChild(div);
+            });
+        }
+
+        // Start Timer
+        function updateTimer() {
+            if (!isPaused) {
+                timeElapsed++;
+                const minutes = String(Math.floor(timeElapsed / 60)).padStart(2, '0');
+                const seconds = String(timeElapsed % 60).padStart(2, '0');
+                document.getElementById('time').textContent = `${minutes}:${seconds}`;
+            }
+        }
+
+        // Handle Ideas
+        function useIdea() {
+            if (ideasLeft > 0) {
+                ideasLeft--;
+                document.getElementById('idea-count').textContent = ideasLeft;
+                alert("Idea: Try attacking the center!");
+            } else {
+                alert("No more ideas left!");
+            }
+        }
+
+        // Handle Game Mode Changes
+        document.querySelector('input[name="mode"][value="computer"]').addEventListener('change', () => {
+            gameMode = 'computer';
+            document.getElementById('difficulty').style.display = 'block';
+            document.getElementById('player2').value = 'Computer';
+            document.getElementById('player2').disabled = true;
+        });
+
+        document.querySelector('input[name="mode"][value="friend"]').addEventListener('change', () => {
+            gameMode = 'friend';
+            document.getElementById('difficulty').style.display = 'none';
+            document.getElementById('player2').value = '';
+            document.getElementById('player2').disabled = false;
+        });
+
+        // Game Controls
+        document.getElementById('start').addEventListener('click', () => {
+            isPaused = false;
+            initializeBoard();
+            timer = setInterval(updateTimer, 1000);
+            document.getElementById('pause').disabled = false;
+            document.getElementById('resume').disabled = true;
+        });
+
+        document.getElementById('pause').addEventListener('click', () => {
+            isPaused = true;
+            clearInterval(timer);
+            document.getElementById('pause').disabled = true;
+            document.getElementById('resume').disabled = false;
+        });
+
+        document.getElementById('resume').addEventListener('click', () => {
+            isPaused = false;
+            timer = setInterval(updateTimer, 1000);
+            document.getElementById('pause').disabled = false;
+            document.getElementById('resume').disabled = true;
+        });
+
+        document.getElementById('restart').addEventListener('click', () => {
+            location.reload();
+        });
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'i') useIdea();
+        });
+    </script>
+</body>
+
+</html>
